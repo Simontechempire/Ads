@@ -1,30 +1,30 @@
 const fs = require("fs");
 const path = require("path");
 
-const DATA_DIR = path.resolve(__dirname, "../data");
-const DATA_FILE = path.join(DATA_DIR, "campaigns.json");
-
-const DEFAULT_DATABASE = {
-  users: {},
-  campaigns: {},
-  transactions: {},
-  statistics: {
-    totalUsers: 0,
-    totalCampaigns: 0,
-    totalSpent: 0,
-    totalRevenue: 0
-  }
-};
+const DATA_DIR = path.join(__dirname, "../data");
+const DATABASE_FILE = path.join(DATA_DIR, "campaigns.json");
 
 function ensureDatabase() {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
 
-  if (!fs.existsSync(DATA_FILE)) {
+  if (!fs.existsSync(DATABASE_FILE)) {
+    const initialData = {
+      users: {},
+      campaigns: {},
+      transactions: {},
+      statistics: {
+        totalUsers: 0,
+        totalCampaigns: 0,
+        totalSpent: 0,
+        totalRevenue: 0
+      }
+    };
+
     fs.writeFileSync(
-      DATA_FILE,
-      JSON.stringify(DEFAULT_DATABASE, null, 2),
+      DATABASE_FILE,
+      JSON.stringify(initialData, null, 2),
       "utf8"
     );
   }
@@ -34,24 +34,33 @@ function readDatabase() {
   ensureDatabase();
 
   try {
-    const data = fs.readFileSync(DATA_FILE, "utf8");
-    return data ? JSON.parse(data) : { ...DEFAULT_DATABASE };
+    return JSON.parse(
+      fs.readFileSync(DATABASE_FILE, "utf8")
+    );
   } catch (error) {
     console.error("❌ Database read error:", error.message);
-    return { ...DEFAULT_DATABASE };
+    return {
+      users: {},
+      campaigns: {},
+      transactions: {},
+      statistics: {
+        totalUsers: 0,
+        totalCampaigns: 0,
+        totalSpent: 0,
+        totalRevenue: 0
+      }
+    };
   }
 }
 
-function writeDatabase(database) {
+function writeDatabase(data) {
   ensureDatabase();
 
   fs.writeFileSync(
-    DATA_FILE,
-    JSON.stringify(database, null, 2),
+    DATABASE_FILE,
+    JSON.stringify(data, null, 2),
     "utf8"
   );
-
-  return database;
 }
 
 // ==============================
@@ -63,30 +72,29 @@ function getUser(userId) {
   return db.users[String(userId)] || null;
 }
 
-function createUser(userData) {
+function createUser(user) {
   const db = readDatabase();
-  const userId = String(userData.id);
+  const id = String(user.id);
 
-  if (db.users[userId]) {
-    return db.users[userId];
+  if (db.users[id]) {
+    return db.users[id];
   }
 
-  const user = {
-    id: userId,
-    username: userData.username || "",
-    firstName: userData.firstName || "",
-    lastName: userData.lastName || "",
+  const newUser = {
+    id: user.id,
+    username: user.username || "",
+    firstName: user.firstName || "",
+    lastName: user.lastName || "",
     balance: 0,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    createdAt: new Date().toISOString()
   };
 
-  db.users[userId] = user;
+  db.users[id] = newUser;
   db.statistics.totalUsers += 1;
 
   writeDatabase(db);
 
-  return user;
+  return newUser;
 }
 
 function updateUser(userId, updates) {
@@ -99,8 +107,7 @@ function updateUser(userId, updates) {
 
   db.users[id] = {
     ...db.users[id],
-    ...updates,
-    updatedAt: new Date().toISOString()
+    ...updates
   };
 
   writeDatabase(db);
@@ -112,31 +119,33 @@ function updateUser(userId, updates) {
 // CAMPAIGNS
 // ==============================
 
-function createCampaign(campaignData) {
+function createCampaign(campaign) {
   const db = readDatabase();
 
-  const campaignId = `CMP-${Date.now()}-${Math.floor(
-    Math.random() * 10000
-  )}`;
+  const id =
+    campaign.id ||
+    `campaign_${Date.now()}_${Math.random()
+      .toString(36)
+      .slice(2, 8)}`;
 
-  const campaign = {
-    id: campaignId,
-    userId: String(campaignData.userId),
-    title: campaignData.title || "",
-    description: campaignData.description || "",
-    targetUrl: campaignData.targetUrl || "",
-    budget: Number(campaignData.budget || 0),
-    status: campaignData.status || "draft",
+  const newCampaign = {
+    id,
+    userId: campaign.userId,
+    title: campaign.title || "",
+    description: campaign.description || "",
+    url: campaign.url || "",
+    budget: Number(campaign.budget || 0),
+    status: campaign.status || "draft",
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
 
-  db.campaigns[campaignId] = campaign;
+  db.campaigns[id] = newCampaign;
   db.statistics.totalCampaigns += 1;
 
   writeDatabase(db);
 
-  return campaign;
+  return newCampaign;
 }
 
 function getCampaign(campaignId) {
@@ -146,10 +155,9 @@ function getCampaign(campaignId) {
 
 function getUserCampaigns(userId) {
   const db = readDatabase();
-  const id = String(userId);
 
   return Object.values(db.campaigns).filter(
-    campaign => campaign.userId === id
+    campaign => String(campaign.userId) === String(userId)
   );
 }
 
@@ -188,7 +196,7 @@ function deleteCampaign(campaignId) {
 }
 
 // ==============================
-// BALANCE
+// WALLET
 // ==============================
 
 function getBalance(userId) {
@@ -203,8 +211,10 @@ function updateBalance(userId, amount) {
     return null;
   }
 
+  const newBalance = Number(amount);
+
   return updateUser(userId, {
-    balance: Number(amount)
+    balance: newBalance
   });
 }
 
@@ -220,7 +230,7 @@ function deductBalance(userId, amount) {
   const currentBalance = getBalance(userId);
   const value = Number(amount);
 
-  if (value <= 0 || currentBalance < value) {
+  if (value > currentBalance) {
     return null;
   }
 
@@ -234,37 +244,45 @@ function deductBalance(userId, amount) {
 // TRANSACTIONS
 // ==============================
 
-function createTransaction(transactionData) {
+function createTransaction(transaction) {
   const db = readDatabase();
 
-  const transactionId = `TXN-${Date.now()}-${Math.floor(
-    Math.random() * 10000
-  )}`;
+  const id =
+    transaction.id ||
+    `tx_${Date.now()}_${Math.random()
+      .toString(36)
+      .slice(2, 8)}`;
 
-  const transaction = {
-    id: transactionId,
-    userId: String(transactionData.userId),
-    type: transactionData.type || "unknown",
-    amount: Number(transactionData.amount || 0),
-    status: transactionData.status || "pending",
-    description: transactionData.description || "",
+  const newTransaction = {
+    id,
+    userId: transaction.userId,
+    type: transaction.type || "unknown",
+    amount: Number(transaction.amount || 0),
+    status: transaction.status || "pending",
+    description: transaction.description || "",
     createdAt: new Date().toISOString()
   };
 
-  db.transactions[transactionId] = transaction;
+  db.transactions[id] = newTransaction;
 
   writeDatabase(db);
 
-  return transaction;
+  return newTransaction;
 }
 
 function getUserTransactions(userId) {
   const db = readDatabase();
-  const id = String(userId);
 
-  return Object.values(db.transactions).filter(
-    transaction => transaction.userId === id
-  );
+  return Object.values(db.transactions)
+    .filter(
+      transaction =>
+        String(transaction.userId) === String(userId)
+    )
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt) -
+        new Date(a.createdAt)
+    );
 }
 
 // ==============================
@@ -277,8 +295,7 @@ function getStatistics() {
   return {
     ...db.statistics,
     totalUsers: Object.keys(db.users).length,
-    totalCampaigns: Object.keys(db.campaigns).length,
-    totalTransactions: Object.keys(db.transactions).length
+    totalCampaigns: Object.keys(db.campaigns).length
   };
 }
 
