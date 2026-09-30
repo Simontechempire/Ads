@@ -1,7 +1,7 @@
 {
   "name": "telegram-ads-manager",
   "version": "2.0.0",
-  "description": "Telegram Ads Management Bot",
+  "description": "Real Telegram Ads Management Bot",
   "main": "bot.js",
   "scripts": {
     "start": "node bot.js",
