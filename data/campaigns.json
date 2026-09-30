@@ -1,0 +1,11 @@
+{
+  "users": {},
+  "campaigns": {},
+  "transactions": {},
+  "statistics": {
+    "totalUsers": 0,
+    "totalCampaigns": 0,
+    "totalSpent": 0,
+    "totalRevenue": 0
+  }
+}
