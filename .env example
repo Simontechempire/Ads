@@ -1,3 +1,7 @@
+# ==========================================
+# TELEGRAM ADS MANAGER v2.0.0
+# ==========================================
+
 # Telegram Bot
 BOT_TOKEN=PASTE_YOUR_BOTFATHER_TOKEN_HERE
 
@@ -6,10 +10,28 @@ OWNER_ID=YOUR_TELEGRAM_USER_ID
 
 # Bot Information
 BOT_NAME=Telegram Ads Manager
-BOT_USERNAME=your_bot_username
+BOT_USERNAME=YOUR_BOT_USERNAME
 
-# Database
+# ==========================================
+# DATABASE
+# ==========================================
+
 DATABASE_FILE=./data/ads.db
 
-# Environment
+# ==========================================
+# FORCE JOIN
+# ==========================================
+
+FORCE_JOIN_ENABLED=true
+
+FORCE_JOIN_CHANNEL_1=@missarcond
+FORCE_JOIN_CHANNEL_2=@babyupdategc
+FORCE_JOIN_CHANNEL_3=@simontech2027
+FORCE_JOIN_CHANNEL_4=@REPLACE_WITH_CHANNEL
+FORCE_JOIN_CHANNEL_5=@techbotsimon
+
+# ==========================================
+# ENVIRONMENT
+# ==========================================
+
 NODE_ENV=production
