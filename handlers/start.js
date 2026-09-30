@@ -18,11 +18,15 @@ async function checkForceJoin(bot, userId) {
     return true;
   }
 
-  if (!config.forceJoinChannels.length) {
+  const channels = config.forceJoinChannels.filter(
+    channel => channel && !channel.includes("REPLACE_WITH_CHANNEL")
+  );
+
+  if (!channels.length) {
     return true;
   }
 
-  for (const channel of config.forceJoinChannels) {
+  for (const channel of channels) {
     const isMember = await isUserMember(bot, userId, channel);
 
     if (!isMember) {
@@ -34,7 +38,11 @@ async function checkForceJoin(bot, userId) {
 }
 
 function buildJoinKeyboard() {
-  const buttons = config.forceJoinChannels.map((channel, index) => [
+  const channels = config.forceJoinChannels.filter(
+    channel => channel && !channel.includes("REPLACE_WITH_CHANNEL")
+  );
+
+  const buttons = channels.map((channel, index) => [
     {
       text: `📢 Join Channel ${index + 1}`,
       url: channel.startsWith("@")
@@ -175,12 +183,12 @@ async function sendMainMenu(bot, chatId, user) {
   await bot.sendMessage(
     chatId,
     `╭━━━━━━━━━━━━━━━━━━━━╮
-┃  🚀 *${config.botName}*
+┃ 🚀 *${config.botName}*
 ┃
-┃  Welcome, *${user.first_name || "User"}*!
+┃ Welcome, *${user.first_name || "User"}*!
 ┃
-┃  📢 Create and manage
-┃  your advertising campaigns.
+┃ 📢 Create and manage
+┃ your advertising campaigns.
 ╰━━━━━━━━━━━━━━━━━━━━╯`,
     {
       parse_mode: "Markdown",
