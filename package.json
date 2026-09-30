@@ -1,0 +1,18 @@
+{
+  "name": "telegram-ads-manager",
+  "version": "2.0.0",
+  "description": "Telegram Ads Management Bot",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js",
+    "dev": "node bot.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "node-telegram-bot-api": "^0.66.0",
+    "better-sqlite3": "^11.8.1"
+  }
+}
