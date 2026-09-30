@@ -1,0 +1,15 @@
+# Telegram Bot
+BOT_TOKEN=PASTE_YOUR_BOTFATHER_TOKEN_HERE
+
+# Owner
+OWNER_ID=YOUR_TELEGRAM_USER_ID
+
+# Bot Information
+BOT_NAME=Telegram Ads Manager
+BOT_USERNAME=your_bot_username
+
+# Database
+DATABASE_FILE=./data/ads.db
+
+# Environment
+NODE_ENV=production
