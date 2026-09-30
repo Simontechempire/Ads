@@ -1,6 +1,8 @@
 const TelegramBot = require("node-telegram-bot-api");
+const http = require("http");
 
 const config = require("./config/config");
+
 const {
   registerStartHandler,
   sendMainMenu
@@ -22,9 +24,23 @@ const {
   getStatistics
 } = require("./database/database");
 
-const {
-  createTelegramService
-} = require("./services/telegram");
+// ==========================================
+// HTTP SERVER FOR RENDER
+// ==========================================
+
+const PORT = Number(process.env.PORT) || 3000;
+
+const server = http.createServer((req, res) => {
+  res.writeHead(200, {
+    "Content-Type": "text/plain"
+  });
+
+  res.end("Telegram Ads Manager is running.");
+});
+
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`🌐 HTTP server listening on port ${PORT}`);
+});
 
 // ==========================================
 // BOT INITIALIZATION
@@ -33,16 +49,6 @@ const {
 const bot = new TelegramBot(config.botToken, {
   polling: true
 });
-
-const telegram = createTelegramService(bot);
-
-// ==========================================
-// OWNER CHECK
-// ==========================================
-
-function isOwner(userId) {
-  return String(userId) === String(config.ownerId);
-}
 
 // ==========================================
 // STATISTICS HANDLER
@@ -55,7 +61,6 @@ function registerStatisticsHandler() {
     }
 
     const chatId = query.message.chat.id;
-    const userId = query.from.id;
 
     try {
       await bot.answerCallbackQuery(query.id);
@@ -65,14 +70,14 @@ function registerStatisticsHandler() {
       await bot.sendMessage(
         chatId,
         `╭━━━━━━━━━━━━━━━━━━━━╮
-┃  📈 *STATISTICS*
+┃ 📈 *STATISTICS*
 ╰━━━━━━━━━━━━━━━━━━━━╯
 
-👥 Total Users: *${stats.totalUsers}*
+👥 Total Users: *${stats.totalUsers || 0}*
 
-📢 Total Campaigns: *${stats.totalCampaigns}*
+📢 Total Campaigns: *${stats.totalCampaigns || 0}*
 
-💳 Total Transactions: *${stats.totalTransactions}*
+💳 Total Transactions: *${stats.totalTransactions || 0}*
 
 💰 Total Spent: *${Number(
           stats.totalSpent || 0
@@ -123,8 +128,9 @@ function registerMainMenuHandler() {
       await bot.answerCallbackQuery(query.id);
 
       await sendMainMenu(
+        bot,
         query.message.chat.id,
-        query.from.id
+        query.from
       );
     } catch (error) {
       console.error(
