@@ -16,7 +16,7 @@ BOT_USERNAME=YOUR_BOT_USERNAME
 # DATABASE
 # ==========================================
 
-DATABASE_FILE=./data/ads.db
+DATABASE_FILE=./data/campaigns.json
 
 # ==========================================
 # FORCE JOIN
